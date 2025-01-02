@@ -2,6 +2,12 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import type { CarScrappedData } from "../types/types";
 import { carScrapped } from "../store";
+import { km77Scrapper } from "./webpageScrapperAlgorithm";
+
+const scrapingMap = new Map([
+  ["www.km77.com", km77Scrapper],
+  ["anotherSite", null],
+]);
 
 // Scrap the HTML from the given URL
 export const scrapperFormHandler = async (e: SubmitEvent) => {
@@ -9,124 +15,41 @@ export const scrapperFormHandler = async (e: SubmitEvent) => {
   const urlInput = document.getElementById("url") as HTMLInputElement;
   console.log("Submitted URL:", urlInput.value);
   const url = urlInput.value;
+  const hostname = new URL(url).hostname;
+  const scrapperFunc = scrapingMap.get(hostname);
 
-  const response = await axios.get(url);
+  if (scrapperFunc) {
+    const result = await scrapperFunc(url);
+    // Set the scrapped data globally in the store
+    carScrapped.set(result);
 
-  // Scrap the HTML
-  const $ = cheerio.load(response.data);
+    (document.getElementById("car-name") as HTMLInputElement).value =
+      result.name;
+    (document.getElementById("car-price") as HTMLInputElement).value =
+      result.price;
+    (document.getElementById("car-hp") as HTMLInputElement).value = result.hp;
+    (document.getElementById("car-accel") as HTMLInputElement).value =
+      result.accel;
+    (document.getElementById("car-length") as HTMLInputElement).value =
+      result.length;
+    (document.getElementById("car-weight") as HTMLInputElement).value =
+      result.weight;
+    (document.getElementById("car-trunk-seat") as HTMLInputElement).value =
+      result.trunk_space_seats;
+    (document.getElementById("car-trunk-no-seat") as HTMLInputElement).value =
+      result.trunk_space_no_seats;
+    (document.getElementById("fuel_tank") as HTMLInputElement).value =
+      result.fuel_tank;
 
-  // Extract the car name
-  const carName = $("h1")
-    .contents()
-    .filter(function () {
-      return this.type === "text";
-    })
-    .text()
-    .trim();
-
-  // Extract the price text, ensuring duplicates are removed
-  const rawText = $(".js-price.js-price-total")
-    .contents() // Get all child nodes
-    .filter(function () {
-      return this.type === "text"; // Include only text nodes
-    })
-    .map((_, node) => $(node).text().trim()) // Trim each text node
-    .toArray(); // Convert to an array
-
-  // Remove duplicates from the array and join into a single string
-  const uniqueText = [...new Set(rawText)].join(" ");
-
-  const potenciaMaxima = $("table.js-relocation-destination")
-    .find('th:contains("Potencia máxima")')
-    .next("td")
-    .contents()
-    .map((_, node) => $(node).text().trim())
-    .toArray()[0];
-
-  const accel = $("table.js-relocation-destination")
-    .find('th:contains("Aceleración 0-100 km/h")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  const car_length = $("table.js-relocation-destination")
-    .find('th:contains("Longitud")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  const car_weight = $("table.js-relocation-destination")
-    .find('th:contains("Peso")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  // Trunk size
-  const trunk_seats = $("table.js-relocation-destination")
-    .find('td:contains("Volumen con una fila de asientos disponible")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  const trunk_no_seats = $("table.js-relocation-destination")
-    .find('td:contains("Volumen mínimo con dos filas de asientos disponibles")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  const fuel_tank_scrapped = $("table.js-relocation-destination")
-    .find('td:contains("Gasolina")')
-    .next("td")
-    .contents()
-    .text()
-    .trim();
-
-  // Return the cleaned-up price text
-  const result: CarScrappedData = {
-    name: carName || "No encontrado",
-    price: uniqueText || "No encontrado",
-    hp: potenciaMaxima || "No encontrado",
-    accel: accel || "No encontrado",
-    length: car_length || "No encontrado",
-    weight: car_weight || "No encontrado",
-    trunk_space_seats: trunk_seats || "No encontrado",
-    trunk_space_no_seats: trunk_no_seats || "No encontrado",
-    fuel_tank: fuel_tank_scrapped || "No encontrado",
-    url: (document.getElementById("url") as HTMLInputElement).value,
-  };
-
-  // Set the scrapped data globally in the store
-  carScrapped.set(result);
-
-  (document.getElementById("car-name") as HTMLInputElement).value = result.name;
-  (document.getElementById("car-price") as HTMLInputElement).value =
-    result.price;
-  (document.getElementById("car-hp") as HTMLInputElement).value = result.hp;
-  (document.getElementById("car-accel") as HTMLInputElement).value =
-    result.accel;
-  (document.getElementById("car-length") as HTMLInputElement).value =
-    result.length;
-  (document.getElementById("car-weight") as HTMLInputElement).value =
-    result.weight;
-  (document.getElementById("car-trunk-seat") as HTMLInputElement).value =
-    result.trunk_space_seats;
-  (document.getElementById("car-trunk-no-seat") as HTMLInputElement).value =
-    result.trunk_space_no_seats;
-  (document.getElementById("fuel_tank") as HTMLInputElement).value =
-    result.fuel_tank;
-
-  console.log("Result:", result);
+    console.log("Result:", result);
+  } else {
+    console.error("Scrapper not found for this site");
+    return;
+  }
 };
 
 // Save the scrapped data in DB form behaviour
-export const saveCarScrappedData = async (
-  e: SubmitEvent
-) => {
+export const saveCarScrappedData = async (e: SubmitEvent) => {
   e.preventDefault();
   const saveButton = document.getElementById(
     "car-scrapper-save-button"

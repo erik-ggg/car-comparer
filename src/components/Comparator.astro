@@ -1,0 +1,111 @@
+---
+import { supabase } from "../lib/supabaseClient";
+import type { CarScrappedData } from "../types/types";
+
+const TABLE_CELLS = new Map([
+  ["carName", "Name"],
+  ["carHorsepower", "Horsepower"],
+  ["carWeight", "Weight"],
+  ["carAcceleration", "Acceleration"],
+]);
+
+const { data: cars, error } = await supabase
+  .from("CarDetails")
+  .select(
+    "name, price, hp, accel, length, weight, trunk_space_no_seats, trunk_space_seats, fuel_tank, url"
+  );
+if (error) {
+  console.error("Error fetching cars details:", error);
+} else {
+  console.log("Cars details fetched successfully:", cars);
+}
+---
+
+<section
+  id="comparator-section"
+  class="w-full h-full px-8 py-8 bg-gradient-to-r from-black to-blue-950"
+>
+  <div id="car-selector" class="flex p-3 border rounded-lg border-violet-800">
+    <div id="first-car">
+      <label class="text-white">Primer coche</label>
+      <div class="flex">
+        <select
+          id="carSelector"
+          class="mt-4 p-3 bg-slate-800 border border-blue-600 text-white text-sm rounded-lg focus:outline-none focus:ring-violet-600 focus:border-violet-600 block w-full"
+        >
+          <option value="" disabled selected>Selecciona un carro</option>
+          {
+            cars?.map((car: CarScrappedData) => (
+              <option value={JSON.stringify(car)}>{car.name}</option>
+            ))
+          }
+        </select>
+        <button
+          id="loadCarDetails"
+          class="border border-blue-600 bg-blue-900 active:bg-blue-500 text-white rounded-lg py-3 px-3 mx-4 mt-4 font-semibold"
+        >
+          Cargar
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="car-data-table" class="mt-4 hidden">
+    <h2 class="text-white">Datos del primer coche</h2>
+    <table class="w-full text-left">
+      <tbody id="carDetailsBody">
+        {
+          Array.from(TABLE_CELLS).map(([key, value]) => (
+            <tr>
+              <td class="w-20 p-3 text-left text-white border border-gray-700">
+                {value}
+              </td>
+              <td
+                id={key}
+                class="p-3 text-left text-white border border-gray-700"></td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  import type { CarScrappedData } from "../types/types";
+
+  const carSelector = document.getElementById(
+    "carSelector"
+  ) as HTMLSelectElement;
+  const button = document.getElementById("loadCarDetails") as HTMLButtonElement;
+
+  button.addEventListener("click", () => {
+    const selectedValue = carSelector.value;
+    if (selectedValue) {
+      const selectedCar = JSON.parse(selectedValue);
+      console.log("Selected Car:", selectedCar);
+
+      // Update your table or UI with selectedCar details
+      updateCarDetailsTable(selectedCar);
+    }
+  });
+
+  function updateCarDetailsTable(car: CarScrappedData) {
+    // Get table and placeholders
+    const table = document.getElementById("car-data-table") as HTMLTableElement;
+
+    // Populate placeholders with car data
+    (document.getElementById("carName") as HTMLTableCellElement).textContent =
+      car.name;
+    (
+      document.getElementById("carHorsepower") as HTMLTableCellElement
+    ).textContent = car.hp;
+    (document.getElementById("carWeight") as HTMLTableCellElement).textContent =
+      car.weight;
+    (
+      document.getElementById("carAcceleration") as HTMLTableCellElement
+    ).textContent = car.accel;
+
+    // Unhide the table
+    table.classList.remove("hidden");
+  }
+</script>

@@ -4,7 +4,7 @@
 
 <section
   id="scrapper-section"
-  class="flex flex-row border border-gray-900 rounded-lg px-8 py-10 bg-gradient-to-r from-black to-blue-950"
+  class="flex flex-row px-8 py-10 bg-gradient-to-r from-black to-blue-950"
 >
   <div
     id="scrapper-url"
@@ -135,12 +135,10 @@
 
 <script>
   import { dotPulse } from "ldrs";
-  import type { CarScrappedData } from "../../types/types";
   import {
     saveCarScrappedData,
     scrapperFormHandler,
   } from "../../lib/formHandlers";
-  import {carScrapped} from "../../store";
 
   // Register the dot pulse loader
   dotPulse.register();
