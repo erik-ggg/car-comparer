@@ -27,7 +27,7 @@ if (error) {
 >
   <div id="car-selector" class="flex p-3 border rounded-lg border-violet-800">
     <div id="first-car">
-      <label class="text-white">Primer coche</label>
+      <label class="text-white">Cargar coche en la tabla</label>
       <div class="flex">
         <select
           id="carSelector"
@@ -49,29 +49,22 @@ if (error) {
       </div>
     </div>
   </div>
-  <div id="car-data-table" class="mt-4 hidden">
-    <h2 class="text-white">Datos del primer coche</h2>
-    <table class="w-full text-left">
-      <tbody id="carDetailsBody">
-        {
-          Array.from(TABLE_CELLS).map(([key, value]) => (
-            <tr>
-              <td class="w-20 p-3 text-left text-white border border-gray-700">
-                {value}
-              </td>
-              <td
-                id={key}
-                class="p-3 text-left text-white border border-gray-700"></td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
+  <div id="car-data-table" class="mt-4 flex">
   </div>
 </section>
 
 <script>
   import type { CarScrappedData } from "../types/types";
+
+  const TABLE_CELLS = new Map<keyof CarScrappedData, string>([
+    ["price", "Price"],
+    ["hp", "Horsepower"],
+    ["weight", "Weight"],
+    ["accel", "Acceleration"],
+  ]);
+
+  // Table counter used to generate unique IDs for each table and rows
+  let tableCounter = 0;
 
   const carSelector = document.getElementById(
     "carSelector"
@@ -80,32 +73,50 @@ if (error) {
 
   button.addEventListener("click", () => {
     const selectedValue = carSelector.value;
-    if (selectedValue) {
+    if (selectedValue && tableCounter < 2) {
       const selectedCar = JSON.parse(selectedValue);
       console.log("Selected Car:", selectedCar);
 
       // Update your table or UI with selectedCar details
-      updateCarDetailsTable(selectedCar);
+      generateTable(selectedCar, tableCounter);
+      tableCounter++;
     }
   });
 
-  function updateCarDetailsTable(car: CarScrappedData) {
-    // Get table and placeholders
-    const table = document.getElementById("car-data-table") as HTMLTableElement;
+  /**
+   * Dynamically generates a table based on the provided data.
+   * @param {Object} carData - The car data to populate the table.
+   */
+  function generateTable(carData: CarScrappedData, tableCounter: number) {
+    const tableDiv = document.getElementById(
+      "car-data-table"
+    ) as HTMLDivElement;
 
-    // Populate placeholders with car data
-    (document.getElementById("carName") as HTMLTableCellElement).textContent =
-      car.name;
-    (
-      document.getElementById("carHorsepower") as HTMLTableCellElement
-    ).textContent = car.hp;
-    (document.getElementById("carWeight") as HTMLTableCellElement).textContent =
-      car.weight;
-    (
-      document.getElementById("carAcceleration") as HTMLTableCellElement
-    ).textContent = car.accel;
+    const container = document.createElement("div");
+    container.classList.add("flex-1", "mx-8");
+    tableDiv.appendChild(container);
 
-    // Unhide the table
-    table.classList.remove("hidden");
+    const h2Header = document.createElement("h2") as HTMLElement;
+    h2Header.classList.add("text-white");
+    h2Header.textContent = carData.name;
+    container.appendChild(h2Header);
+
+    const table = document.createElement("table");
+    table.classList.add("w-full", "mt-4");
+
+    const tbody = document.createElement("tbody");
+
+    // Create body rows
+    Array.from(TABLE_CELLS).map(([key, value]) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+      <td class="w-20 p-3 text-left text-white border border-gray-700">${value}</td>
+      <td class="p-3 text-left text-white border border-gray-700">${carData[key]}</td>
+    `;
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
   }
 </script>
