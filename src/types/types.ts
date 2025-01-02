@@ -11,6 +11,14 @@ export interface CarScrappedData {
   url: string;
 }
 
+export interface CompItem {
+  id: number;
+  price: any;
+  hp: any;
+  accel: any;
+  weight: any;
+}
+
 export type Database = {
   public: {
     tables: {

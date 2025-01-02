@@ -1,6 +1,3 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
-import type { CarScrappedData } from "../types/types";
 import { carScrapped } from "../store";
 import { km77Scrapper } from "./webpageScrapperAlgorithm";
 
