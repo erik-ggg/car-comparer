@@ -133,6 +133,11 @@ if (error) {
     tableCounter = 0;
   });
 
+  /**
+   * Compares the selected cars and updates the table with the comparison results.
+   *
+   * @param tableCounter - The number of cars selected for comparison.
+   */
   function handleCompare(tableCounter: number) {
     let items = [] as CompItem[];
     for (let index = 1; index <= tableCounter; index++) {
@@ -154,22 +159,35 @@ if (error) {
     highlightComparison(result);
   }
 
+  /**
+   * Changes the text color of the table cells based on the comparison result.
+   * The color is determined by the value of the property.
+   * If the value is 0, the text color is red. If the value is 2, the text color is green.
+   * If the value is 1, the text color is the default color.
+   *
+   * @param items - The array of objects representing the comparison results.
+   */
   function highlightComparison(items: CompItem[]) {
+    const highlightClassMap = {
+      0: "!text-red-600",
+      2: "!text-green-600",
+    };
     items.forEach((item) => {
-      if (item.price === 0) {
-        document
-          .getElementById(`price-${item.id}`)
-          ?.classList.add("text-red-600");
-      } else if (item.price === 2) {
-        document
-          .getElementById(`price-${item.id}`)
-          ?.classList.add("text-green-600");
-      }
+      Object.entries(item).forEach(([property, propertyValue]) => {
+        const className =
+          highlightClassMap[propertyValue as keyof typeof highlightClassMap];
+        if (className) {
+          document
+            .getElementById(`${property}-${item.id}`)
+            ?.classList.add(className);
+        }
+      });
     });
   }
 
   /**
    * Dynamically generates a table based on the provided data.
+   *
    * @param {Object} carData - The car data to populate the table.
    */
   function generateTable(carData: CarScrappedData, tableCounter: number) {
